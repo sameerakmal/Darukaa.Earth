@@ -1,23 +1,23 @@
 from datetime import date
 import uuid
 from sqlalchemy import Column, Date, Float, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
 from app.database.session import Base
+from app.models.guid import GUID
 
 
 class SiteAnalytics(Base):
     __tablename__ = "site_analytics"
 
     id = Column(
-        UUID(as_uuid=True),
+        GUID,
         primary_key=True,
         default=uuid.uuid4,
         index=True,
     )
     site_id = Column(
-        UUID(as_uuid=True),
+        GUID,
         ForeignKey("sites.id", ondelete="CASCADE"),
         nullable=False,
         index=True,

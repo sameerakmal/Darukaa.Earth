@@ -1,23 +1,23 @@
 from datetime import datetime, timezone
 import uuid
 from sqlalchemy import Column, DateTime, ForeignKey, String, Text
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
 from app.database.session import Base
+from app.models.guid import GUID
 
 
 class Project(Base):
     __tablename__ = "projects"
 
     id = Column(
-        UUID(as_uuid=True),
+        GUID,
         primary_key=True,
         default=uuid.uuid4,
         index=True,
     )
     user_id = Column(
-        UUID(as_uuid=True),
+        GUID,
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True,

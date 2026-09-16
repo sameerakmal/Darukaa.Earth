@@ -2,23 +2,23 @@ from datetime import datetime, timezone
 import uuid
 from geoalchemy2 import Geometry
 from sqlalchemy import Column, DateTime, Float, ForeignKey, String, Text
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
 from app.database.session import Base
+from app.models.guid import GUID
 
 
 class Site(Base):
     __tablename__ = "sites"
 
     id = Column(
-        UUID(as_uuid=True),
+        GUID,
         primary_key=True,
         default=uuid.uuid4,
         index=True,
     )
     project_id = Column(
-        UUID(as_uuid=True),
+        GUID,
         ForeignKey("projects.id", ondelete="CASCADE"),
         nullable=False,
         index=True,

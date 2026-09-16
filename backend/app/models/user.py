@@ -1,17 +1,17 @@
 from datetime import datetime, timezone
 import uuid
 from sqlalchemy import Column, DateTime, String
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
 from app.database.session import Base
+from app.models.guid import GUID
 
 
 class User(Base):
     __tablename__ = "users"
 
     id = Column(
-        UUID(as_uuid=True),
+        GUID,
         primary_key=True,
         default=uuid.uuid4,
         index=True,

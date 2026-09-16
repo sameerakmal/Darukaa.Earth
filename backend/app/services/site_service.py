@@ -34,12 +34,24 @@ def parse_geojson_to_postgis(geojson_data: Any):
     return from_shape(geom, srid=4326)
 
 
+from shapely.wkt import loads as wkt_loads
+
+
 def postgis_to_geojson_dict(site: Site) -> Dict[str, Any]:
     """Convert PostGIS Site.geometry back to GeoJSON dictionary."""
     if site.geometry is None:
         return {}
-    shapely_geom = to_shape(site.geometry)
-    return mapping(shapely_geom)
+    if isinstance(site.geometry, dict):
+        return site.geometry
+    try:
+        shapely_geom = to_shape(site.geometry)
+        return mapping(shapely_geom)
+    except Exception:
+        try:
+            shapely_geom = wkt_loads(str(site.geometry))
+            return mapping(shapely_geom)
+        except Exception:
+            return {}
 
 
 def site_to_read_dict(site: Site) -> Dict[str, Any]:

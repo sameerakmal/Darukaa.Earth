@@ -30,5 +30,8 @@ frontend/build/
 .DS_Store
 Thumbs.db
 
-# Temp files
+# Temp & Database files
 pdf_text_extracted.txt
+*.db
+*.sqlite
+*.sqlite3
