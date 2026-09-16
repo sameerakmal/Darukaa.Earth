@@ -1,0 +1,22 @@
+{
+  "name": "darukaa-earth-monorepo",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "prepare": "husky install",
+    "lint": "npm run lint --prefix frontend",
+    "prettier:check": "npm run prettier:check --prefix frontend",
+    "test:backend": "pytest backend",
+    "test:frontend": "npm run build --prefix frontend"
+  },
+  "devDependencies": {
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.2",
+    "prettier": "^3.2.5"
+  },
+  "lint-staged": {
+    "frontend/src/**/*.{ts,tsx,css,json}": [
+      "prettier --write"
+    ]
+  }
+}

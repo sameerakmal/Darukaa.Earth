@@ -1,0 +1,9 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "🔍 [Darukaa.Earth] Running automated pre-commit code quality check..."
+
+# Run lint-staged for formatted code checks
+npx lint-staged
+
+echo "✅ Pre-commit verification passed successfully!"
