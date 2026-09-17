@@ -6,11 +6,19 @@ from app.core.config import settings
 
 db_url = settings.get_database_url()
 
+# Azure PostgreSQL (and standard PostgreSQL) connections use SSL.
+# Pass sslmode=require via connect_args whenever the URL is a PostgreSQL DSN.
+# The SQLite fallback path (below) does not use this argument.
+_pg_connect_args = (
+    {"sslmode": "require"} if db_url.startswith("postgresql") else {}
+)
+
 try:
     engine = create_engine(
         db_url,
         pool_pre_ping=True,
         echo=False,
+        connect_args=_pg_connect_args,
     )
     with engine.connect() as conn:
         pass
