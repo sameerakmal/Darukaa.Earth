@@ -66,6 +66,23 @@ export const ProjectDetailsPage: React.FC = () => {
     setIsCreateSiteModalOpen(true);
   };
 
+  const handleQuickAddSampleSite = () => {
+    const samplePolygon: GeoJSONPolygon = {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [-60.1, 3.1],
+          [-60.0, 3.1],
+          [-60.0, 3.0],
+          [-60.1, 3.0],
+          [-60.1, 3.1],
+        ],
+      ],
+    };
+    setDrawnPolygon(samplePolygon);
+    setIsCreateSiteModalOpen(true);
+  };
+
   const handleSaveSite = async (input: SiteCreateInput) => {
     if (!projectId) return;
     const newSite = await sitesApi.createSite(projectId, input);
@@ -206,12 +223,19 @@ export const ProjectDetailsPage: React.FC = () => {
               </div>
 
               {sites.length === 0 ? (
-                <div className="py-12 text-center text-slate-500 space-y-2 border border-dashed border-slate-800/80 rounded-xl bg-slate-950/40">
+                <div className="py-12 text-center text-slate-500 space-y-3 border border-dashed border-slate-800/80 rounded-xl bg-slate-950/40 px-4">
                   <Layers className="w-8 h-8 mx-auto text-slate-600" />
                   <p className="text-xs font-medium text-slate-400">No sites added yet</p>
-                  <p className="text-[11px] text-slate-500 px-4">
-                    Click "Draw New Site Polygon" above to draw site boundaries on satellite map.
+                  <p className="text-[11px] text-slate-500">
+                    Click "Draw New Site Polygon" above, or quick add a polygon site below:
                   </p>
+                  <button
+                    onClick={handleQuickAddSampleSite}
+                    className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold rounded-lg transition-colors"
+                  >
+                    <MapPin className="w-3.5 h-3.5" />
+                    <span>Quick Add Sample Site</span>
+                  </button>
                 </div>
               ) : (
                 <div className="space-y-3 max-h-[450px] overflow-y-auto pr-1">
