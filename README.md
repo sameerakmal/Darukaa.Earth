@@ -1,157 +1,330 @@
-# Darukaa.Earth
+# Darukaa.Earth — Geospatial Intelligence & Climate Analytics Platform
 
-> Full-stack geospatial data analytics platform for managing, visualizing, and monitoring carbon and biodiversity projects.
-
----
-
-## Table of Contents
-- [Overview](#overview)
-- [Key Features](#key-features)
-- [High-Level Architecture](#high-level-architecture)
-- [Technology Stack](#technology-stack)
-- [Database Schema & Architecture](#database-schema--architecture)
-- [Project Structure](#project-structure)
-- [Quick Start / Local Setup](#quick-start--local-setup)
-- [Environment Variables](#environment-variables)
-- [Mapbox Access Token](#mapbox-access-token)
-- [Testing & Verification](#testing--verification)
-- [CI/CD Pipeline & GitHub Actions](#cicd-pipeline--github-actions)
-- [Code Quality & Pre-Commit Hooks (Husky)](#code-quality--pre-commit-hooks-husky)
-- [Live Demo](#live-demo)
-- [Submission & Repository Access](#submission--repository-access)
+> A production-grade, full-stack geospatial data analytics platform engineered for environmental administrators and ecological analysts to monitor carbon sequestration sites, draw interactive spatial boundaries, and analyze time-series biodiversity health metrics.
 
 ---
 
-## Overview
+## Live Production Links
 
-**Darukaa.Earth** is a modern geospatial data analytics platform engineered for environmental project administrators and ecological analysts. It enables seamless monitoring, management, and visualization of carbon sequestration sites and biodiversity conservation projects across interactive satellite maps, spatial polygon geometries, and time-series performance charts.
-
----
-
-## Key Features
-
-- **JWT Authentication & Security**: Complete user registration and login workflow with password hashing (Bcrypt) and stateless JWT token authentication.
-- **Project Management Dashboard**: Create, view, filter, and isolate carbon and biodiversity projects with metadata tags and project status tracking.
-- **Geospatial Map Canvas (Mapbox GL JS + Draw)**: Interactive satellite mapping with custom polygon drawing controls (`@mapbox/mapbox-gl-draw`), site selection, automatic bounding-box fitting, and vertex calculations.
-- **Data Visualization & Performance Analytics (Highcharts)**: Interactive dual-axis trend analysis visualizing carbon sequestration (tCO₂e) and biodiversity health scores (0-100 index) over time.
-- **Robust Geospatial Database (PostGIS)**: Spatial polygon storage using PostGIS geometries (`SRID 4326`), with cross-database fallback for offline dev/test environments.
-- **Automated Code Quality & CI/CD**: Pre-commit hooks via Husky + lint-staged, automated ESLint checks, Prettier formatting, and GitHub Actions workflow testing on every push/PR.
+* **Frontend Dashboard (Vercel)**: [https://darukaa-earth.vercel.app](https://darukaa-earth.vercel.app)
+* **Backend API (Render)**: [https://darukaa-api.onrender.com](https://darukaa-api.onrender.com)
+* **Interactive API Documentation (Swagger)**: [https://darukaa-api.onrender.com/docs](https://darukaa-api.onrender.com/docs)
+* **Backend Health Status**: [https://darukaa-api.onrender.com/health](https://darukaa-api.onrender.com/health)
 
 ---
 
-## High-Level Architecture
+## Features
 
-```text
-               +-------------------------------------------------------+
-               |                  React 18 Frontend                    |
-               |       TypeScript + Vite + Tailwind CSS + Lucide       |
-               +---------------------------+---------------------------+
-                                           |
-                   +-----------------------+-----------------------+
-                   |                                               |
-        +----------v----------+                         +----------v----------+
-        |   Mapbox GL JS &    |                         |  Highcharts React   |
-        |  Mapbox GL Draw     |                         | Time-Series Charts  |
-        +---------------------+                         +---------------------+
-                                           |
-                                  REST API (JSON/JWT)
-                                           |
-               +---------------------------v---------------------------+
-               |                  FastAPI Backend                      |
-               |     Python 3.12 + Pydantic v2 + OAuth2 JWT Auth       |
-               +---------------------------+---------------------------+
-                                           |
-               +---------------------------v---------------------------+
-               |           SQLAlchemy 2.0 + GeoAlchemy2                |
-               +---------------------------+---------------------------+
-                                           |
-               +---------------------------v---------------------------+
-               |          PostgreSQL 15 + PostGIS 3.3                  |
-               |        (Spatial Polygons SRID 4326 + Cascade FKs)     |
-               +-------------------------------------------------------+
-```
+* **User Authentication & Authorization**: Full user registration and login workflow utilizing Bcrypt password hashing and stateless JWT bearer tokens.
+* **Project Management Dashboard**: Complete CRUD operations for carbon and biodiversity conservation projects with metadata filtering, status tags, and site association.
+* **Interactive Mapbox Satellite Canvas**: Satellite mapping powered by Mapbox GL JS with dynamic bounding-box calculation, auto-zoom, and custom site markers.
+* **Vector Polygon Spatial Drawing (`@mapbox/mapbox-gl-draw`)**: In-browser vector polygon creation tool enabling users to draw boundary shapes, calculate area in hectares, and persist GeoJSON geometries.
+* **Time-Series Performance Analytics (Highcharts)**: Dual-axis visualization tracking carbon stock values ($tCO_2e$) and biodiversity index scores ($0-100$) over time.
+* **Spatial Database Persistence (PostGIS)**: Native spatial polygon storage using PostGIS geometries (`SRID 4326`) with GeoJSON conversion via GeoAlchemy2 and Shapely.
+* **Command Palette Navigation (`Ctrl+K` / `Cmd+K`)**: Keyboard-driven command palette for instant search and navigation across projects and sites.
+* **Site Inspection Sheet**: Slide-out inspection drawer detailing site coordinates, spatial metadata, vertex counts, and historic performance logs.
+* **Production Safety Controls**: Strict database connection checks preventing silent SQLite fallbacks in production deployment environments.
 
 ---
 
-## Technology Stack
+## Tech Stack
 
 ### Frontend
-- **Framework**: [React 18](https://react.dev/) with [TypeScript 5](https://www.typescriptlang.org/)
-- **Build Tool**: [Vite](https://vitejs.dev/)
-- **Mapping**: [Mapbox GL JS v3](https://docs.mapbox.com/mapbox-gl-js/) + [`@mapbox/mapbox-gl-draw`](https://github.com/mapbox/mapbox-gl-draw)
-- **Data Visualization**: [Highcharts](https://www.highcharts.com/) + [`highcharts-react-official`](https://github.com/highcharts/highcharts-react)
-- **Styling**: [Tailwind CSS v3](https://tailwindcss.com/) + Lucide Icons
-- **Routing**: React Router DOM v6
-- **Code Quality**: ESLint + Prettier
+| Component | Technology |
+| :--- | :--- |
+| **Core Framework** | React 18 + TypeScript 5 |
+| **Build Tooling** | Vite 5 |
+| **Styling & UI** | Tailwind CSS v3 + Radix UI + Lucide Icons |
+| **Geospatial Mapping** | Mapbox GL JS v3 + `@mapbox/mapbox-gl-draw` |
+| **Analytics Charts** | Highcharts v13 + `highcharts-react-official` |
+| **Routing** | React Router DOM v6 |
 
 ### Backend
-- **Framework**: [FastAPI](https://fastapi.tiangolo.com/) (Python 3.12)
-- **ORM & Spatial Extension**: [SQLAlchemy 2.0](https://www.sqlalchemy.org/) + [GeoAlchemy2](https://geoalchemy2.readthedocs.io/)
-- **Database**: [PostgreSQL 15](https://www.postgresql.org/) with [PostGIS 3.3](https://postgis.net/)
-- **Geometry Processing**: [Shapely](https://shapely.readthedocs.io/) (GeoJSON validation, WKT/WKB parsing)
-- **Authentication**: Passlib (Bcrypt) + PyJWT + FastAPI OAuth2 Bearer
+| Component | Technology |
+| :--- | :--- |
+| **API Framework** | FastAPI 0.110 (Python 3.12) |
+| **ORM & Spatial** | SQLAlchemy 2.0 + GeoAlchemy2 0.14 |
+| **Geometry Utilities** | Shapely 2.0 (GeoJSON / WKT parsing) |
+| **Validation** | Pydantic v2 + `email-validator` |
+| **Authentication** | Passlib (Bcrypt) + PyJWT + OAuth2 Bearer |
 
-### DevOps & Developer Experience
-- **CI/CD**: GitHub Actions (`.github/workflows/ci.yml`)
-- **Pre-commit Hooks**: Husky v8 + lint-staged
-- **Containerization**: Docker & Docker Compose (`postgis/postgis:15-3.3`)
+### Database & Infrastructure
+| Component | Technology |
+| :--- | :--- |
+| **Database** | Azure Database for PostgreSQL (Flexible Server) |
+| **Spatial Engine** | PostGIS 3.6 (`SRID 4326`) |
+| **Frontend Host** | Vercel (Edge SPA Hosting) |
+| **Backend Host** | Render (Python 3.12 Web Service) |
+| **CI/CD** | GitHub Actions + Docker Compose |
 
 ---
 
-## Database Schema & Architecture
+## System Architecture
 
-The database is built on PostgreSQL with PostGIS extensions:
+```mermaid
+graph TD
+    subgraph Client Layer
+        User(["User Browser"])
+    end
 
-```text
-  +------------------+         +--------------------+
-  |      USERS       |         |      PROJECTS      |
-  +------------------+         +--------------------+
-  | id (UUID, PK)    |<-------1| id (UUID, PK)      |
-  | email (String)   |        *| user_id (UUID, FK) |
-  | password_hash    |         | name (String)      |
-  | created_at       |         | project_type       |
-  +------------------+         | status             |
-                               | created_at/updated |
-                               +---------+----------+
-                                         |1
-                                         |
-                                         |*
-                               +---------v----------+
-                               |       SITES        |
-                               +--------------------+
-                               | id (UUID, PK)      |
-                               | project_id (FK)    |
-                               | name (String)      |
-                               | description (Text) |
-                               | area (Float, ha)   |
-                               | geometry (POLYGON) |
-                               |   SRID 4326        |
-                               | created_at/updated |
-                               +---------+----------+
-                                         |1
-                                         |
-                                         |*
-                               +---------v----------+
-                               |   SITE_ANALYTICS   |
-                               +--------------------+
-                               | id (UUID, PK)      |
-                               | site_id (UUID, FK) |
-                               | date (Date)        |
-                               | carbon_value       |
-                               | biodiversity_score |
-                               +--------------------+
+    subgraph Hosting & Edge Layer
+        Vercel["Vercel SPA Hosting<br/>(React 18 + Vite + Mapbox)"]
+    end
+
+    subgraph API Service Layer
+        Render["Render Backend Web Service<br/>(FastAPI + Python 3.12)"]
+    end
+
+    subgraph Database Layer
+        AzureDB[("Azure PostgreSQL + PostGIS<br/>(Flexible Server SRID 4326)")]
+    end
+
+    User -->|HTTPS| Vercel
+    Vercel -->|HTTPS REST API / Bearer JWT| Render
+    Render -->|PostgreSQL TCP + TLS/SSL| AzureDB
 ```
 
-- **Cascading Deletes**: Deleting a User cascades to their Projects -> Sites -> SiteAnalytics.
-- **PostGIS SRID 4326**: Site geometries are stored in spatial WGS 84 (`SRID 4326`) polygon format.
-- **UUID Primary Keys**: All tables use UUID primary keys for global uniqueness and security.
+### Layer Responsibilities
+* **Vercel Frontend**: Serves the compiled React single-page application, handling vector map rendering, interactive polygon drawing, and Highcharts analytics charts.
+* **Render Backend**: Runs the stateless FastAPI application for user authentication, project/site management, GeoJSON validation, and JWT verification.
+* **Azure PostgreSQL + PostGIS**: Managed spatial database storing user accounts, project structures, PostGIS geometry polygons, and analytics time-series metrics over encrypted TLS/SSL connections.
+
+---
+
+## Database & Spatial Model
+
+```mermaid
+erDiagram
+    USERS ||--o{ PROJECTS : "owns"
+    PROJECTS ||--o{ SITES : "contains"
+    SITES ||--o{ SITE_ANALYTICS : "tracks"
+
+    USERS {
+        uuid id PK
+        string email UK
+        string password_hash
+        datetime created_at
+    }
+    PROJECTS {
+        uuid id PK
+        uuid user_id FK
+        string name
+        string project_type
+        string status
+        datetime created_at
+        datetime updated_at
+    }
+    SITES {
+        uuid id PK
+        uuid project_id FK
+        string name
+        string description
+        float area
+        geometry geometry_SRID_4326
+        datetime created_at
+        datetime updated_at
+    }
+    SITE_ANALYTICS {
+        uuid id PK
+        uuid site_id FK
+        date date
+        float carbon_value
+        float biodiversity_score
+    }
+```
+
+### Spatial Data Processing
+1. **Frontend**: Mapbox Draw captures vector polygon vertices as GeoJSON coordinates (`[longitude, latitude]`).
+2. **API Layer**: FastAPI parses GeoJSON payloads, validates geometry using Shapely, and converts polygon coordinates into WGS 84 spatial shapes.
+3. **Database Layer**: GeoAlchemy2 inserts spatial geometry records into PostgreSQL using PostGIS `GEOMETRY(POLYGON, 4326)` columns.
+4. **Data Integrity**: All foreign keys feature `ON DELETE CASCADE` constraints ensuring clean cascading removal of dependent sites and analytics when a project or user is removed.
+
+---
+
+## Authentication Flow
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User
+    participant Client as React Frontend
+    participant API as FastAPI Backend
+    participant DB as PostgreSQL DB
+
+    User->>Client: Enter Email & Password
+    Client->>API: POST /api/v1/auth/login
+    API->>DB: Fetch User Record by Email
+    DB-->>API: Return Hashed Password
+    API->>API: Verify Password via Bcrypt
+    API-->>Client: Return Signed JWT Access Token
+    Client->>Client: Store JWT in localStorage
+
+    Note over Client,API: Subsequent Authenticated API Requests
+    Client->>API: GET /api/v1/projects (Header: Bearer <token>)
+    API->>API: Verify JWT Signature & Expiry
+    API->>DB: Query Projects for User ID
+    DB-->>API: Return User Projects
+    API-->>Client: Return 200 OK JSON Response
+```
+
+---
+
+## Local Development Setup
+
+### Prerequisites
+* **Node.js** (v18.0 or higher) & `npm`
+* **Python** (v3.12 or higher)
+* **Docker & Docker Compose** (Optional: for local PostGIS container)
+
+---
+
+### 1. Database Setup (Docker PostGIS)
+To run PostgreSQL with PostGIS locally using Docker:
+
+```bash
+docker compose up -d db
+```
+
+---
+
+### 2. Backend Setup & Local Server Execution
+
+```bash
+# 1. Navigate to backend directory
+cd backend
+
+# 2. Create and activate Python virtual environment
+python -m venv .venv
+# On macOS/Linux:
+source .venv/bin/activate
+# On Windows:
+.venv\Scripts\activate
+
+# 3. Install backend dependencies
+pip install -r requirements.txt
+
+# 4. Create local environment file from template
+cp .env.example .env
+
+# 5. Start FastAPI development server
+uvicorn app.main:app --reload --port 8000
+```
+
+Local API access points:
+* **Swagger API Documentation**: [http://localhost:8000/docs](http://localhost:8000/docs)
+* **Health Check**: [http://localhost:8000/health](http://localhost:8000/health)
+
+---
+
+### 3. Frontend Setup & Local Launch
+
+```bash
+# 1. Open a new terminal and navigate to frontend directory
+cd frontend
+
+# 2. Install Node dependencies
+npm install
+
+# 3. Create local environment file from template
+cp .env.example .env
+
+# 4. Add your Mapbox Public Token to frontend/.env:
+# VITE_MAPBOX_TOKEN=pk.eyJ1Ijo...
+
+# 5. Start Vite development server
+npm run dev
+```
+
+Open [http://localhost:5173](http://localhost:5173) in your browser.
+
+---
+
+## Environment Variables Reference
+
+### Backend (`backend/.env`)
+
+| Variable | Type | Description |
+| :--- | :--- | :--- |
+| `ENVIRONMENT` | `string` | Execution environment (`development` or `production`). Disables SQLite fallback when set to `production`. |
+| `DATABASE_URL` | `string` | Full PostgreSQL DSN (e.g. `postgresql://user:pass@host:5432/dbname`). |
+| `SECRET_KEY` | `string` | Cryptographic secret key used to sign JWT access tokens. |
+| `CORS_ORIGINS` | `json` | Allowed CORS origins array (e.g. `["https://darukaa-earth.vercel.app"]`). |
+| `POSTGRES_SERVER` | `string` | Fallback PostgreSQL host for local development (`localhost`). |
+| `POSTGRES_PORT` | `string` | Fallback PostgreSQL port (`5432`). |
+| `POSTGRES_USER` | `string` | Fallback PostgreSQL user (`darukaa`). |
+| `POSTGRES_PASSWORD` | `string` | Fallback PostgreSQL password (`darukaa_secret`). |
+| `POSTGRES_DB` | `string` | Fallback PostgreSQL database name (`darukaa_earth`). |
+
+> **Security Note**: Never commit actual production secrets or database credentials to version control. `.env` files are excluded in `.gitignore`.
+
+### Frontend (`frontend/.env`)
+
+| Variable | Type | Description |
+| :--- | :--- | :--- |
+| `VITE_API_BASE_URL` | `string` | Base URL of the backend API service (e.g. `https://darukaa-api.onrender.com` or `http://localhost:8000`). |
+| `VITE_MAPBOX_TOKEN` | `string` | Mapbox GL public access key (`pk.eyJ1I...`). |
+
+---
+
+## Testing & Quality Assurance
+
+### Backend Automated Test Suite (Pytest)
+The backend test suite covers authentication flows, project CRUD, GeoJSON polygon parsing, PostGIS spatial queries, analytics series, and production database safety checks.
+
+```bash
+cd backend
+pytest -v
+```
+
+### Frontend Code Quality & Bundle Verification
+
+```bash
+cd frontend
+
+# Run ESLint code quality inspection (0 warnings tolerance)
+npm run lint
+
+# Verify code style and formatting using Prettier
+npm run prettier:check
+
+# Execute TypeScript compilation & production build bundle
+npm run build
+```
+
+### Automated CI/CD (GitHub Actions)
+The repository includes automated CI (`.github/workflows/ci.yml`) that triggers on all pushes and pull requests:
+* **Backend Job**: Launches a live PostgreSQL + PostGIS 15 container service, installs Python 3.12 dependencies, and runs `pytest`.
+* **Frontend Job**: Installs Node 20 dependencies, executes Prettier style checks, runs ESLint linting, and builds the TypeScript bundle.
+
+---
+
+## API Overview
+
+| Method | Endpoint | Description | Auth Required |
+| :--- | :--- | :--- | :---: |
+| `POST` | `/api/v1/auth/register` | Register new user account | No |
+| `POST` | `/api/v1/auth/login` | Authenticate user & return JWT token | No |
+| `GET` | `/api/v1/auth/me` | Fetch current user profile | **Yes** |
+| `GET` | `/api/v1/projects` | List projects for current user | **Yes** |
+| `POST` | `/api/v1/projects` | Create a new project | **Yes** |
+| `GET` | `/api/v1/projects/{id}` | Get project details by ID | **Yes** |
+| `PUT` | `/api/v1/projects/{id}` | Update existing project | **Yes** |
+| `DELETE` | `/api/v1/projects/{id}` | Delete project & associated sites | **Yes** |
+| `GET` | `/api/v1/projects/{id}/sites` | List sites for a project | **Yes** |
+| `POST` | `/api/v1/projects/{id}/sites` | Create site with GeoJSON polygon | **Yes** |
+| `GET` | `/api/v1/sites/{id}` | Get site details and spatial geometry | **Yes** |
+| `PUT` | `/api/v1/sites/{id}` | Update site metadata or geometry | **Yes** |
+| `DELETE` | `/api/v1/sites/{id}` | Delete site & site analytics | **Yes** |
+| `GET` | `/api/v1/sites/{id}/analytics` | Get analytics history for site | **Yes** |
+| `POST` | `/api/v1/sites/{id}/analytics` | Log new carbon/biodiversity entry | **Yes** |
+| `GET` | `/health` | System status & database connection health | No |
 
 ---
 
 ## Project Structure
 
 ```text
-darukaa-earth/
+Darukaa.Earth/
 ├── .github/
 │   └── workflows/
 │       └── ci.yml                 # GitHub Actions CI/CD Pipeline
@@ -161,257 +334,54 @@ darukaa-earth/
 │   └── Darukaa___FullStack_Hackathon_(1)_revised_613627.pdf
 ├── frontend/
 │   ├── src/
-│   │   ├── api/                   # API HTTP client modules
-│   │   │   ├── analytics.ts       # GET/POST /sites/{id}/analytics
-│   │   │   ├── auth.ts            # POST /auth/login, /auth/register, GET /auth/me
-│   │   │   ├── client.ts          # Base fetch wrapper (JWT injection, 401 handling)
-│   │   │   ├── projects.ts        # CRUD /projects
-│   │   │   └── sites.ts           # CRUD /projects/{id}/sites, /sites/{id}
+│   │   ├── api/                   # Typed API HTTP client modules
 │   │   ├── components/
 │   │   │   ├── Layout/            # Navbar, ProtectedRoute, PublicRoute
 │   │   │   ├── Map/               # ProjectMap (Mapbox GL JS + Draw)
 │   │   │   ├── Projects/          # CreateProjectModal, ProjectCard
-│   │   │   └── Sites/             # CreateSiteModal, SiteAnalyticsModal
+│   │   │   ├── Sites/             # CreateSiteModal, SiteAnalyticsModal, SiteInspectionSheet
+│   │   │   └── ui/                # UI primitives (Card, Dialog, Sheet, Badge, Input, Select)
 │   │   ├── context/
-│   │   │   └── AuthContext.tsx    # JWT auth state (login, register, logout)
-│   │   ├── pages/                 # Route pages (Dashboard, ProjectDetails, Login, Register)
-│   │   ├── types/                 # TypeScript type interfaces
-│   │   ├── App.tsx                # Router + route guards
+│   │   │   └── AuthContext.tsx    # JWT Authentication state provider
+│   │   ├── pages/                 # Route views (Dashboard, ProjectDetails, Login, Register)
+│   │   ├── types/                 # TypeScript interfaces (Auth, Project, Site, Analytics)
+│   │   ├── App.tsx                # React Router setup & route protection
 │   │   └── main.tsx
-│   ├── .env.example               # Environment variable template
+│   ├── public/
+│   ├── .env.example               # Frontend environment template
 │   ├── package.json
 │   ├── tsconfig.json
 │   ├── vite.config.ts
+│   ├── vercel.json                # Vercel SPA routing rewrite rules
 │   └── tailwind.config.js
 ├── backend/
 │   ├── app/
-│   │   ├── api/                   # FastAPI route handlers (auth, projects, sites, analytics)
-│   │   ├── core/                  # Security & configuration
-│   │   ├── database/              # DB sessions, engine & init_db
+│   │   ├── api/                   # FastAPI endpoint handlers (auth, projects, sites, analytics)
+│   │   ├── core/                  # Configuration & Security (JWT, Bcrypt)
+│   │   ├── database/              # Engine, Session & PostGIS initialization
 │   │   ├── models/                # SQLAlchemy models (User, Project, Site, Analytics)
 │   │   ├── schemas/               # Pydantic validation schemas
-│   │   ├── services/              # Business logic & geometry handling
+│   │   ├── services/              # Business logic & GeoJSON geometry processing
 │   │   └── main.py
-│   ├── tests/                     # Comprehensive Pytest test suite (10 tests)
-│   ├── requirements.txt
-│   └── .env.example
-├── docker-compose.yml             # PostGIS service definition
-├── package.json                   # Monorepo root (Husky + lint-staged)
+│   ├── tests/                     # Pytest suite (15 tests)
+│   ├── .env.example               # Backend environment template
+│   ├── .python-version            # Python version pin (3.12.7)
+│   └── requirements.txt           # Python production dependencies
+├── docker-compose.yml             # Local PostGIS database service definition
+├── package.json                   # Root monorepo configuration (Husky + lint-staged)
 └── README.md
 ```
 
 ---
 
-## Quick Start / Local Setup
+## Assignment Requirements Mapping
 
-### 1. Prerequisites
-- **Node.js** (v18 or higher) & `npm`
-- **Python** (v3.10 or higher)
-- **Docker & Docker Compose** (for PostgreSQL + PostGIS)
-
----
-
-### 2. Database Setup (Docker PostGIS)
-
-Spin up the PostGIS container:
-
-```bash
-docker compose up -d db
-```
-
-Verify database health:
-```bash
-docker compose ps
-```
-
----
-
-### 3. Backend Setup & Server Execution
-
-1. Navigate to `backend`:
-   ```bash
-   cd backend
-   ```
-
-2. Create virtual environment & install dependencies:
-   ```bash
-   python -m venv .venv
-   # Windows:
-   .venv\Scripts\activate
-   # macOS/Linux:
-   source .venv/bin/activate
-
-   pip install -r requirements.txt
-   ```
-
-3. Configure backend environment (copy from template):
-   ```bash
-   cp .env.example .env
-   # Edit .env if your PostgreSQL credentials differ from defaults
-   ```
-
-4. Run the FastAPI dev server:
-   ```bash
-   uvicorn app.main:app --reload --port 8000
-   ```
-
-5. Access backend documentation:
-   - Interactive Swagger API Docs: [http://localhost:8000/docs](http://localhost:8000/docs)
-   - Health Status: [http://localhost:8000/health](http://localhost:8000/health)
-
----
-
-### 4. Frontend Setup & Application Launch
-
-1. Navigate to `frontend`:
-   ```bash
-   cd frontend
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Configure frontend environment (see [Environment Variables](#environment-variables) below):
-   ```bash
-   cp .env.example .env
-   # Add your Mapbox public token to VITE_MAPBOX_TOKEN
-   ```
-
-4. Start Vite development server:
-   ```bash
-   npm run dev
-   ```
-   Open [http://localhost:5173](http://localhost:5173) in your browser.
-
----
-
-## Environment Variables
-
-### Backend (`backend/.env`)
-
-| Variable | Default | Description |
-|---|---|---|
-| `POSTGRES_SERVER` | `localhost` | PostgreSQL host |
-| `POSTGRES_PORT` | `5432` | PostgreSQL port |
-| `POSTGRES_USER` | `darukaa` | Database username |
-| `POSTGRES_PASSWORD` | `darukaa_secret` | Database password |
-| `POSTGRES_DB` | `darukaa_earth` | Database name |
-| `SECRET_KEY` | *(set a strong random value in production)* | JWT signing secret |
-| `DATABASE_URL` | *(optional)* | Full DSN override (overrides individual Postgres vars) |
-
-> **Security note**: Never commit a production `SECRET_KEY` to version control. Generate one with:
-> ```bash
-> python -c "import secrets; print(secrets.token_hex(32))"
-> ```
-
-### Frontend (`frontend/.env`)
-
-| Variable | Required | Description |
-|---|---|---|
-| `VITE_API_BASE_URL` | Yes | Backend API base URL (e.g. `http://localhost:8000`) |
-| `VITE_MAPBOX_TOKEN` | Yes | Your Mapbox public access token (see below) |
-
-> The `frontend/.env` file is **git-ignored** and must be created locally. Use `frontend/.env.example` as a template.
-
----
-
-## Mapbox Access Token
-
-Interactive satellite maps and polygon drawing require a **Mapbox public access token**.
-
-1. Create a free account at [https://account.mapbox.com/](https://account.mapbox.com/)
-2. Navigate to **Tokens** and copy your default public token (starts with `pk.`)
-3. Add it to your `frontend/.env`:
-   ```env
-   VITE_MAPBOX_TOKEN=pk.eyJ1Ijoixxxxxx...
-   ```
-
-The token is read at runtime via `import.meta.env.VITE_MAPBOX_TOKEN`. No token is hardcoded in source code. If the variable is missing or left as the placeholder value, the map component renders a clear setup-instructions panel rather than failing silently.
-
----
-
-## Testing & Verification
-
-### Backend
-
-```bash
-cd backend
-pytest                    # Run all 10 tests
-pytest -v                 # Verbose output with test names
-pytest tests/test_auth.py # Run a specific test module
-```
-
-Tests cover: JWT authentication, project CRUD, site creation with GeoJSON polygons, analytics records, and database model integrity. The test suite uses an in-memory SQLite fallback so no live PostgreSQL instance is required for local testing.
-
-### Frontend
-
-```bash
-cd frontend
-npm run lint              # ESLint — 0 warnings tolerance
-npm run prettier:check    # Prettier formatting check
-npm run build             # TypeScript compile + Vite production bundle
-```
-
-### Monorepo (from root)
-
-```bash
-npm run lint              # Delegates to frontend ESLint
-npm run prettier:check    # Delegates to frontend Prettier check
-npm run test:backend      # Runs pytest from root
-npm run test:frontend     # Runs frontend production build
-```
-
----
-
-## CI/CD Pipeline & GitHub Actions
-
-The repository includes an automated GitHub Actions pipeline (`.github/workflows/ci.yml`) configured to run on all pushes and pull requests to `main`/`master`:
-
-- **Backend Automation Job**:
-  - Provisions a live PostgreSQL + PostGIS 15-3.3 service container in GitHub Actions.
-  - Installs Python 3.12 dependencies.
-  - Runs the full `pytest` suite verifying JWT auth, project CRUD, GeoJSON polygon handling, and site analytics.
-- **Frontend Automation Job**:
-  - Installs Node.js 20 dependencies via `npm ci`.
-  - Executes Prettier syntax checks (`npm run prettier:check`).
-  - Runs strict ESLint code quality inspection (`npm run lint`).
-  - Compiles the full TypeScript production bundle (`npm run build`).
-- **Deployment Trigger Job**: Runs only on `main`/`master` after both jobs pass. No external deployment secrets are required.
-
----
-
-## Code Quality & Pre-Commit Hooks (Husky)
-
-This repository enforces automated pre-commit code quality validation using **Husky** and **lint-staged**.
-
-### Setup Husky Pre-Commit Hooks
-From the monorepo root directory:
-```bash
-npm install
-npx husky install
-```
-
-When creating git commits, Husky automatically runs `lint-staged` to format TypeScript, JSON, and CSS files via Prettier before the commit is recorded. This ensures all committed frontend source code is consistently formatted.
-
-**lint-staged scope** — only `frontend/src/**/*.{ts,tsx,css,json}` files are processed; backend, config files, and root-level files are not affected.
-
----
-
-## Live Demo
-
-> 🚧 **Live deployment URL**: *(to be added upon deployment)*
->
-> Repository URL: *(to be added — access granted to submission reviewers below)*
-
----
-
-## Submission & Repository Access
-
-In accordance with submission guidelines, access to this GitHub repository is granted to the hiring team accounts:
-
-- `ankita.dasgupta@darukaa.com`
-- `harsh.kumar@darukaa.com`
-- `utkarsh.gauniyal@darukaa.com`
-- `guneet.mutreja@darukaa.com`
+| Assignment Requirement | Implementation Detail | Status |
+| :--- | :--- | :---: |
+| **Full-Stack Application** | React + TypeScript frontend connected to FastAPI Python backend via REST API. | **Verified** |
+| **Geospatial Mapping** | Interactive Mapbox GL JS map with vector polygon drawing via `@mapbox/mapbox-gl-draw`. | **Verified** |
+| **Spatial Database** | PostgreSQL with PostGIS extension (`GEOMETRY(POLYGON, 4326)`). | **Verified** |
+| **JWT Authentication** | Secure User Registration/Login flow with Bcrypt password hashing and JWT tokens. | **Verified** |
+| **Time-Series Analytics** | Highcharts dual-axis visualization tracking Carbon ($tCO_2e$) and Biodiversity scores. | **Verified** |
+| **Public Cloud Deployment** | Frontend deployed to Vercel, Backend deployed to Render, Database hosted on Azure PostgreSQL. | **Verified** |
+| **Automated Testing & Quality** | 15 backend tests (`pytest`), ESLint, Prettier, and GitHub Actions CI workflow. | **Verified** |
