@@ -1,6 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { GeoJSONPolygon, SiteCreateInput } from '../../types/site';
-import { X, MapPin, Loader2 } from 'lucide-react';
+import { MapPin, Loader2, Layers } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 
 interface CreateSiteModalProps {
   isOpen: boolean;
@@ -23,12 +34,12 @@ export const CreateSiteModal: React.FC<CreateSiteModalProps> = ({
 
   useEffect(() => {
     if (drawnPolygon) {
-      // Calculate approximate area in hectares or sq km if desired, or default empty
+      // Calculate approximate area in hectares if desired, or default 100
       setArea('100');
     }
   }, [drawnPolygon]);
 
-  if (!isOpen || !drawnPolygon) return null;
+  if (!drawnPolygon) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,89 +66,89 @@ export const CreateSiteModal: React.FC<CreateSiteModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800">
-          <h2 className="text-lg font-bold text-white flex items-center space-x-2">
-            <MapPin className="w-5 h-5 text-emerald-400" />
-            <span>Save Drawn Site</span>
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-md bg-white border-slate-200 shadow-lg rounded-xl">
+        <DialogHeader>
+          <div className="flex items-center space-x-2.5">
+            <div className="p-2 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <MapPin className="w-4.5 h-4.5" />
+            </div>
+            <div>
+              <DialogTitle className="text-base text-slate-900 font-bold font-sans">
+                Save Spatial Site
+              </DialogTitle>
+              <DialogDescription className="text-xs text-slate-500">
+                Assign metadata to captured GPS polygon coordinates.
+              </DialogDescription>
+            </div>
+          </div>
+        </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 py-2">
           {error && (
-            <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-xs p-3 rounded-lg">
+            <div className="bg-red-50 border border-red-200 text-red-700 text-xs p-3 rounded-lg font-mono">
               {error}
             </div>
           )}
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Site Name *</label>
-            <input
+            <label className="block text-xs font-semibold text-slate-700 mb-1">Site Name *</label>
+            <Input
               type="text"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Sector A - Reforestation Reserve"
-              className="w-full bg-slate-800/80 border border-slate-700 text-slate-100 rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:border-emerald-500 transition-colors"
+              placeholder="e.g. Sector 4 - Canopy Sequestration Zone"
+              className="bg-white border-slate-200 focus:border-emerald-600 text-xs rounded-lg"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Description</label>
-            <textarea
+            <label className="block text-xs font-semibold text-slate-700 mb-1">Description</label>
+            <Textarea
               rows={2}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Key notes regarding site geography, canopy density, etc..."
-              className="w-full bg-slate-800/80 border border-slate-700 text-slate-100 rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:border-emerald-500 transition-colors resize-none"
+              placeholder="Geography notes, canopy density estimates, soil type..."
+              className="bg-white border-slate-200 focus:border-emerald-600 text-xs rounded-lg"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
               Estimated Area (Hectares)
             </label>
-            <input
+            <Input
               type="number"
               step="any"
               min="0"
               value={area}
               onChange={(e) => setArea(e.target.value)}
-              placeholder="e.g. 250.5"
-              className="w-full bg-slate-800/80 border border-slate-700 text-slate-100 rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:border-emerald-500 transition-colors"
+              placeholder="e.g. 150.5"
+              className="bg-white border-slate-200 focus:border-emerald-600 text-xs font-mono rounded-lg"
             />
           </div>
 
-          <div className="bg-slate-800/50 p-3 rounded-lg border border-slate-700/50 text-[11px] text-slate-400 space-y-1">
-            <div className="font-semibold text-slate-300 flex items-center space-x-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-              <span>Captured GeoJSON Polygon</span>
+          <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 text-[11px] font-mono text-slate-600 space-y-1">
+            <div className="font-bold text-emerald-800 flex items-center space-x-1.5">
+              <Layers className="w-3.5 h-3.5 text-emerald-600" />
+              <span>SPATIAL BOUNDARY METADATA</span>
             </div>
-            <p>
-              Polygon points: {drawnPolygon.coordinates[0]?.length || 0} vertices forming a closed
-              loop (SRID 4326).
+            <p className="text-slate-600">
+              Captured polygon contains {drawnPolygon.coordinates[0]?.length || 0} GPS vertices
+              forming a closed spatial geometry.
             </p>
           </div>
 
-          <div className="pt-4 flex items-center justify-end space-x-3 border-t border-slate-800">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-xs font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
-            >
+          <DialogFooter className="pt-3 border-t border-slate-100">
+            <Button type="button" variant="outline" onClick={onClose}>
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
+              variant="emerald"
               disabled={isSubmitting || !name.trim()}
-              className="px-4 py-2 text-xs font-medium text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-lg transition-colors disabled:opacity-50 flex items-center space-x-1.5 font-semibold"
+              className="gap-1.5 font-semibold"
             >
               {isSubmitting ? (
                 <>
@@ -147,10 +158,10 @@ export const CreateSiteModal: React.FC<CreateSiteModalProps> = ({
               ) : (
                 <span>Save Site</span>
               )}
-            </button>
-          </div>
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };

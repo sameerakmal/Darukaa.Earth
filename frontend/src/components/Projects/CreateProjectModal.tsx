@@ -1,6 +1,24 @@
 import React, { useState } from 'react';
 import { ProjectCreateInput } from '../../types/project';
-import { X, Plus, Loader2 } from 'lucide-react';
+import { Loader2, FolderPlus } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface CreateProjectModalProps {
   isOpen: boolean;
@@ -19,8 +37,6 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
   const [status, setStatus] = useState('active');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,96 +62,98 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800">
-          <h2 className="text-lg font-bold text-white flex items-center space-x-2">
-            <Plus className="w-5 h-5 text-emerald-400" />
-            <span>Create New Project</span>
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-md bg-white border-slate-200 shadow-lg rounded-xl">
+        <DialogHeader>
+          <div className="flex items-center space-x-2.5">
+            <div className="p-2 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <FolderPlus className="w-4.5 h-4.5" />
+            </div>
+            <div>
+              <DialogTitle className="text-base text-slate-900 font-bold font-sans">
+                Create New Project
+              </DialogTitle>
+              <DialogDescription className="text-xs text-slate-500">
+                Define a new environmental initiative for spatial monitoring.
+              </DialogDescription>
+            </div>
+          </div>
+        </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 py-2">
           {error && (
-            <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-xs p-3 rounded-lg">
+            <div className="bg-red-50 border border-red-200 text-red-700 text-xs p-3 rounded-lg font-mono">
               {error}
             </div>
           )}
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
               Project Name *
             </label>
-            <input
+            <Input
               type="text"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Amazon Rainforest Carbon Sink"
-              className="w-full bg-slate-800/80 border border-slate-700 text-slate-100 rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:border-emerald-500 transition-colors"
+              placeholder="e.g. Amazon Basin Carbon Reserve"
+              className="bg-white border-slate-200 focus:border-emerald-600 text-xs rounded-lg"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Description</label>
-            <textarea
+            <label className="block text-xs font-semibold text-slate-700 mb-1">Description</label>
+            <Textarea
               rows={3}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Brief description of project goals and geographical scope..."
-              className="w-full bg-slate-800/80 border border-slate-700 text-slate-100 rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:border-emerald-500 transition-colors resize-none"
+              placeholder="Brief description of ecological scope and project goals..."
+              className="bg-white border-slate-200 focus:border-emerald-600 text-xs rounded-lg"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Project Type
               </label>
-              <select
-                value={projectType}
-                onChange={(e) => setProjectType(e.target.value)}
-                className="w-full bg-slate-800/80 border border-slate-700 text-slate-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-500 transition-colors"
-              >
-                <option value="carbon">Carbon Offset</option>
-                <option value="biodiversity">Biodiversity</option>
-                <option value="reforestation">Reforestation</option>
-                <option value="conservation">Conservation</option>
-              </select>
+              <Select value={projectType} onValueChange={(val) => setProjectType(val)}>
+                <SelectTrigger className="bg-white border-slate-200 text-xs rounded-lg">
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="carbon">Carbon Offset</SelectItem>
+                  <SelectItem value="biodiversity">Biodiversity</SelectItem>
+                  <SelectItem value="reforestation">Reforestation</SelectItem>
+                  <SelectItem value="conservation">Conservation</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Status</label>
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                className="w-full bg-slate-800/80 border border-slate-700 text-slate-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-500 transition-colors"
-              >
-                <option value="active">Active</option>
-                <option value="planning">Planning</option>
-                <option value="completed">Completed</option>
-              </select>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Status</label>
+              <Select value={status} onValueChange={(val) => setStatus(val)}>
+                <SelectTrigger className="bg-white border-slate-200 text-xs rounded-lg">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="planning">Planning</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
-          <div className="pt-4 flex items-center justify-end space-x-3 border-t border-slate-800">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-xs font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
-            >
+          <DialogFooter className="pt-4 border-t border-slate-100">
+            <Button type="button" variant="outline" onClick={onClose}>
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
+              variant="emerald"
               disabled={isSubmitting || !name.trim()}
-              className="px-4 py-2 text-xs font-medium text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-lg transition-colors disabled:opacity-50 flex items-center space-x-1.5 font-semibold"
+              className="gap-1.5 font-semibold"
             >
               {isSubmitting ? (
                 <>
@@ -145,10 +163,10 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
               ) : (
                 <span>Create Project</span>
               )}
-            </button>
-          </div>
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };

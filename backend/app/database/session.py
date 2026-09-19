@@ -1,16 +1,21 @@
+import logging
 from typing import Generator
 from sqlalchemy import create_engine, event, text
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 from app.core.config import settings
 
+logger = logging.getLogger(__name__)
+
 db_url = settings.get_database_url()
+is_postgres = db_url.startswith("postgresql") or db_url.startswith("postgres")
+using_sqlite_fallback = False
 
 # Azure PostgreSQL (and standard PostgreSQL) connections use SSL.
 # Pass sslmode=require via connect_args whenever the URL is a PostgreSQL DSN.
 # The SQLite fallback path (below) does not use this argument.
 _pg_connect_args = (
-    {"sslmode": "require"} if db_url.startswith("postgresql") else {}
+    {"sslmode": "require"} if is_postgres else {}
 )
 
 try:
@@ -21,9 +26,19 @@ try:
         connect_args=_pg_connect_args,
     )
     with engine.connect() as conn:
-        pass
+        conn.execute(text("SELECT 1"))
 except Exception as e:
-    print(f"PostgreSQL connection unavailable ({e}). Using SQLite fallback.")
+    allow_fallback = settings.should_allow_sqlite_fallback()
+    if is_postgres and not allow_fallback:
+        err_msg = (
+            f"CRITICAL: Failed to connect to PostgreSQL database ({e}). "
+            "SQLite fallback is disabled in production."
+        )
+        logger.critical(err_msg)
+        raise RuntimeError(err_msg) from e
+
+    print(f"[WARNING] PostgreSQL connection unavailable ({e}). Using SQLite fallback.")
+    using_sqlite_fallback = True
     db_url = "sqlite:///./darukaa_fallback.db"
     engine = create_engine(
         db_url,

@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Globe, Lock, Mail, Loader2, LogIn } from 'lucide-react';
+import { Globe, Lock, Mail, Loader2, LogIn, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 export const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -29,84 +32,102 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center p-6 relative font-sans">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-emerald-900/20 via-slate-950 to-slate-950 pointer-events-none"></div>
-
-      <div className="w-full max-w-md bg-slate-900/60 border border-slate-800 backdrop-blur-xl p-8 rounded-2xl shadow-2xl relative z-10">
+    <div className="min-h-screen bg-[#F8FAF8] flex flex-col justify-center items-center p-4 sm:p-6 font-sans text-slate-900">
+      <div className="w-full max-w-md">
+        {/* Brand Header */}
         <div className="text-center mb-8">
-          <div className="mx-auto h-12 w-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center font-bold text-emerald-400 mb-3">
+          <div className="mx-auto h-12 w-12 rounded-xl bg-emerald-950 text-emerald-400 flex items-center justify-center shadow-xs mb-4">
             <Globe className="w-6 h-6 text-emerald-400" />
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">
-            Welcome to Darukaa<span className="text-emerald-400">.Earth</span>
+          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight font-sans">
+            Darukaa<span className="text-emerald-600">.Earth</span>
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
-            Sign in to access your geospatial carbon and biodiversity platform
+          <p className="text-xs text-slate-500 mt-1 font-medium">
+            Geospatial Environmental &amp; Climate Platform
           </p>
         </div>
 
-        {error && (
-          <div className="mb-6 bg-red-500/10 border border-red-500/30 text-red-400 text-xs p-3 rounded-lg text-center">
-            {error}
-          </div>
-        )}
+        {/* Auth Card */}
+        <Card className="border border-slate-200 shadow-sm bg-white p-2 rounded-xl">
+          <CardHeader className="space-y-1 pb-4">
+            <CardTitle className="text-lg text-slate-900 font-bold font-sans">
+              Sign in to workspace
+            </CardTitle>
+            <CardDescription className="text-slate-500 font-sans text-xs">
+              Enter your credentials to access geospatial projects &amp; analytics
+            </CardDescription>
+          </CardHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Email Address</label>
-            <div className="relative">
-              <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@darukaa.earth"
-                className="w-full bg-slate-800/80 border border-slate-700 text-slate-100 rounded-lg pl-9 pr-3.5 py-2.5 text-sm focus:outline-none focus:border-emerald-500 transition-colors"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Password</label>
-            <div className="relative">
-              <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full bg-slate-800/80 border border-slate-700 text-slate-100 rounded-lg pl-9 pr-3.5 py-2.5 text-sm focus:outline-none focus:border-emerald-500 transition-colors"
-              />
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            disabled={isSubmitting || !email || !password}
-            className="w-full mt-2 py-2.5 bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-semibold text-sm rounded-lg transition-colors flex items-center justify-center space-x-2 disabled:opacity-50"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Signing in...</span>
-              </>
-            ) : (
-              <>
-                <LogIn className="w-4 h-4" />
-                <span>Sign In</span>
-              </>
+          <CardContent>
+            {error && (
+              <div className="mb-4 bg-red-50 border border-red-200 text-red-700 text-xs p-3 rounded-lg flex items-center gap-2 font-mono">
+                <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+                <span>{error}</span>
+              </div>
             )}
-          </button>
-        </form>
 
-        <div className="mt-6 pt-6 border-t border-slate-800 text-center text-xs text-slate-400">
-          Don't have an account?{' '}
-          <Link to="/register" className="text-emerald-400 hover:underline font-semibold">
-            Create account
-          </Link>
-        </div>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Email Address
+                </label>
+                <div className="relative">
+                  <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <Input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="admin@darukaa.earth"
+                    className="pl-9 bg-white border-slate-200 focus:border-emerald-600 text-xs rounded-lg"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Password</label>
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <Input
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="pl-9 bg-white border-slate-200 focus:border-emerald-600 text-xs rounded-lg"
+                  />
+                </div>
+              </div>
+
+              <Button
+                type="submit"
+                variant="emerald"
+                disabled={isSubmitting || !email || !password}
+                className="w-full mt-2 font-semibold gap-2 shadow-xs py-2.5 text-xs rounded-lg"
+                size="default"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Signing in...</span>
+                  </>
+                ) : (
+                  <>
+                    <LogIn className="w-4 h-4" />
+                    <span>Sign In</span>
+                  </>
+                )}
+              </Button>
+            </form>
+
+            <div className="mt-6 pt-4 border-t border-slate-100 text-center text-xs text-slate-500 font-sans">
+              Don't have access yet?{' '}
+              <Link to="/register" className="text-emerald-700 hover:underline font-semibold">
+                Create an account
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

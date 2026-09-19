@@ -5,7 +5,6 @@ import { analyticsApi } from '../../api/analytics';
 import { SiteAnalyticsRecord } from '../../types/analytics';
 import { Site } from '../../types/site';
 import {
-  X,
   TrendingUp,
   Award,
   Calendar,
@@ -14,6 +13,15 @@ import {
   Sparkles,
   BarChart2,
 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 interface SiteAnalyticsModalProps {
   isOpen: boolean;
@@ -107,9 +115,9 @@ export const SiteAnalyticsModal: React.FC<SiteAnalyticsModalProps> = ({
     }
   };
 
-  if (!isOpen || !site) return null;
+  if (!site) return null;
 
-  // Prepare Highcharts series data sorted by date
+  // Sort analytics by date
   const sortedAnalytics = [...analytics].sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
   );
@@ -132,97 +140,98 @@ export const SiteAnalyticsModal: React.FC<SiteAnalyticsModalProps> = ({
     chart: {
       type: 'spline',
       backgroundColor: 'transparent',
-      height: 340,
+      height: 320,
       style: {
         fontFamily: 'Inter, sans-serif',
       },
     },
-    title: {
-      text: undefined,
-    },
+    title: { text: undefined },
     xAxis: {
       categories: categories,
-      lineColor: '#334155',
-      tickColor: '#334155',
+      lineColor: '#e2e8f0',
+      tickColor: '#e2e8f0',
       labels: {
         style: {
-          color: '#94a3b8',
+          color: '#64748b',
           fontSize: '11px',
+          fontFamily: 'Inter, sans-serif',
         },
       },
     },
     yAxis: [
       {
-        // Primary yAxis (Carbon)
         title: {
-          text: 'Carbon Sequestration (tCO₂e)',
+          text: 'Carbon Stock (tCO₂e)',
           style: {
-            color: '#34d399',
+            color: '#064e3b',
             fontSize: '11px',
-            fontWeight: '600',
+            fontWeight: '700',
+            fontFamily: 'Inter, sans-serif',
           },
         },
-        gridLineColor: '#1e293b',
+        gridLineColor: '#f1f5f9',
         labels: {
           style: {
-            color: '#34d399',
+            color: '#064e3b',
             fontSize: '11px',
+            fontFamily: 'Inter, sans-serif',
           },
         },
       },
       {
-        // Secondary yAxis (Biodiversity)
         title: {
-          text: 'Biodiversity Health Score (0-100)',
+          text: 'Biodiversity Health Index (0-100)',
           style: {
-            color: '#60a5fa',
+            color: '#10b981',
             fontSize: '11px',
-            fontWeight: '600',
+            fontWeight: '700',
+            fontFamily: 'Inter, sans-serif',
           },
         },
         opposite: true,
         gridLineColor: 'transparent',
         labels: {
           style: {
-            color: '#60a5fa',
+            color: '#10b981',
             fontSize: '11px',
+            fontFamily: 'Inter, sans-serif',
           },
         },
       },
     ],
     tooltip: {
       shared: true,
-      backgroundColor: '#0f172a',
-      borderColor: '#334155',
-      borderRadius: 12,
+      backgroundColor: '#ffffff',
+      borderColor: '#e2e8f0',
+      borderRadius: 8,
+      shadow: true,
       style: {
-        color: '#f8fafc',
+        color: '#0f172a',
         fontSize: '12px',
+        fontFamily: 'Inter, sans-serif',
       },
     },
     legend: {
       itemStyle: {
-        color: '#cbd5e1',
+        color: '#334155',
         fontSize: '12px',
-        fontWeight: '500',
+        fontWeight: '600',
       },
       itemHoverStyle: {
-        color: '#10b981',
+        color: '#064e3b',
       },
     },
-    credits: {
-      enabled: false,
-    },
+    credits: { enabled: false },
     series: [
       {
         name: 'Carbon Stock (tCO₂e)',
         type: 'spline',
         yAxis: 0,
         data: carbonSeries,
-        color: '#10b981',
+        color: '#064e3b',
         marker: {
-          fillColor: '#059669',
-          radius: 4,
+          fillColor: '#047857',
+          radius: 4.5,
         },
       },
       {
@@ -230,107 +239,103 @@ export const SiteAnalyticsModal: React.FC<SiteAnalyticsModalProps> = ({
         type: 'spline',
         yAxis: 1,
         data: bioSeries,
-        color: '#3b82f6',
+        color: '#10b981',
         marker: {
-          fillColor: '#2563eb',
-          radius: 4,
+          fillColor: '#059669',
+          radius: 4.5,
         },
       },
     ],
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        {/* Modal Header */}
-        <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/90">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-4xl max-h-[90vh] flex flex-col overflow-hidden p-6 bg-white border-slate-200 shadow-lg rounded-xl">
+        <DialogHeader className="pb-3 border-b border-slate-100">
           <div className="flex items-center space-x-3">
-            <div className="p-2.5 rounded-xl bg-emerald-950 border border-emerald-800/80 text-emerald-400">
+            <div className="p-2.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200">
               <BarChart2 className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-base text-white">{site.name}</h3>
-              <p className="text-xs text-slate-400">
-                Site Performance Analytics &amp; Ecological Monitoring
-              </p>
+              <DialogTitle className="text-base text-slate-900 font-bold font-sans">
+                {site.name}
+              </DialogTitle>
+              <DialogDescription className="text-xs text-slate-500">
+                Site Telemetry Analytics &amp; Ecological Indices
+              </DialogDescription>
             </div>
           </div>
+        </DialogHeader>
 
-          <button
-            onClick={onClose}
-            className="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-800 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Modal Body */}
-        <div className="p-6 overflow-y-auto space-y-6 flex-1">
+        <div className="overflow-y-auto space-y-6 pt-4 pr-1 flex-1">
           {/* Key Metrics Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-slate-950/60 border border-slate-800 p-4 rounded-2xl flex items-center space-x-4">
-              <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20">
-                <TrendingUp className="w-5 h-5" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+            <div className="bg-white border border-slate-200 p-4 rounded-lg flex items-center space-x-3.5 shadow-xs">
+              <div className="p-2.5 bg-emerald-50 text-emerald-800 rounded-lg border border-emerald-200 shrink-0">
+                <TrendingUp className="w-4 h-4" />
               </div>
               <div>
-                <p className="text-xs text-slate-400 font-medium">Avg. Carbon Value</p>
-                <p className="text-lg font-bold text-white mt-0.5">
-                  {avgCarbon} <span className="text-xs font-normal text-emerald-400">tCO₂e</span>
+                <p className="text-xs text-slate-500 font-mono">Avg. Carbon Value</p>
+                <p className="text-base font-bold text-slate-900 mt-0.5 font-mono">
+                  {avgCarbon} <span className="text-xs font-normal text-emerald-700">tCO₂e</span>
                 </p>
               </div>
             </div>
 
-            <div className="bg-slate-950/60 border border-slate-800 p-4 rounded-2xl flex items-center space-x-4">
-              <div className="p-3 bg-blue-500/10 text-blue-400 rounded-xl border border-blue-500/20">
-                <Award className="w-5 h-5" />
+            <div className="bg-white border border-slate-200 p-4 rounded-lg flex items-center space-x-3.5 shadow-xs">
+              <div className="p-2.5 bg-emerald-50 text-emerald-700 rounded-lg border border-emerald-200 shrink-0">
+                <Award className="w-4 h-4" />
               </div>
               <div>
-                <p className="text-xs text-slate-400 font-medium">Max Biodiversity Score</p>
-                <p className="text-lg font-bold text-white mt-0.5">
-                  {maxBio} <span className="text-xs font-normal text-blue-400">/ 100</span>
+                <p className="text-xs text-slate-500 font-mono">Max Biodiversity Score</p>
+                <p className="text-base font-bold text-slate-900 mt-0.5 font-mono">
+                  {maxBio} <span className="text-xs font-normal text-emerald-600">/ 100</span>
                 </p>
               </div>
             </div>
 
-            <div className="bg-slate-950/60 border border-slate-800 p-4 rounded-2xl flex items-center space-x-4">
-              <div className="p-3 bg-purple-500/10 text-purple-400 rounded-xl border border-purple-500/20">
-                <Calendar className="w-5 h-5" />
+            <div className="bg-white border border-slate-200 p-4 rounded-lg flex items-center space-x-3.5 shadow-xs">
+              <div className="p-2.5 bg-slate-100 text-slate-700 rounded-lg border border-slate-200 shrink-0">
+                <Calendar className="w-4 h-4" />
               </div>
               <div>
-                <p className="text-xs text-slate-400 font-medium">Recorded Samples</p>
-                <p className="text-lg font-bold text-white mt-0.5">
+                <p className="text-xs text-slate-500 font-mono">Recorded Samples</p>
+                <p className="text-base font-bold text-slate-900 mt-0.5 font-mono">
                   {analytics.length}{' '}
-                  <span className="text-xs font-normal text-slate-400">entries</span>
+                  <span className="text-xs font-normal text-slate-500">entries</span>
                 </p>
               </div>
             </div>
           </div>
 
           {/* Action Header */}
-          <div className="flex items-center justify-between pt-2">
-            <h4 className="font-semibold text-sm text-slate-200 flex items-center space-x-2">
-              <span>Historical Trend (Highcharts)</span>
+          <div className="flex items-center justify-between pt-1">
+            <h4 className="font-bold text-xs uppercase tracking-wider text-slate-700">
+              Ecological Trend Lines
             </h4>
 
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2">
               {analytics.length === 0 && (
-                <button
+                <Button
                   onClick={handleGenerateSeedData}
                   disabled={loading}
-                  className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 transition-colors"
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                  <Sparkles className="w-3.5 h-3.5 text-amber-600" />
                   <span>Seed Demo Data</span>
-                </button>
+                </Button>
               )}
 
-              <button
+              <Button
                 onClick={() => setShowAddForm((prev) => !prev)}
-                className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold rounded-xl transition-colors shadow-md"
+                size="sm"
+                className="gap-1.5 font-semibold"
               >
                 <PlusCircle className="w-3.5 h-3.5" />
                 <span>Log Data Entry</span>
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -338,89 +343,88 @@ export const SiteAnalyticsModal: React.FC<SiteAnalyticsModalProps> = ({
           {showAddForm && (
             <form
               onSubmit={handleAddSample}
-              className="bg-slate-950 border border-slate-800 p-4 rounded-2xl space-y-4 animate-in fade-in duration-150"
+              className="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3 animate-in fade-in duration-150"
             >
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                     Date
                   </label>
-                  <input
+                  <Input
                     type="date"
                     value={dateStr}
                     onChange={(e) => setDateStr(e.target.value)}
                     required
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                     Carbon Value (tCO₂e)
                   </label>
-                  <input
+                  <Input
                     type="number"
                     step="0.1"
                     value={carbonVal}
                     onChange={(e) => setCarbonVal(e.target.value)}
                     required
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                     Biodiversity Score (0-100)
                   </label>
-                  <input
+                  <Input
                     type="number"
                     step="0.1"
                     value={biodiversityVal}
                     onChange={(e) => setBiodiversityVal(e.target.value)}
                     required
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
                   />
                 </div>
               </div>
 
               <div className="flex justify-end space-x-2 pt-1">
-                <button
+                <Button
                   type="button"
                   onClick={() => setShowAddForm(false)}
-                  className="px-3 py-1.5 text-xs text-slate-400 hover:text-white"
+                  variant="ghost"
+                  size="sm"
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
                   disabled={submitting}
-                  className="px-4 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold rounded-xl transition-colors inline-flex items-center space-x-1.5"
+                  size="sm"
+                  className="gap-1 font-semibold"
                 >
                   {submitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                   <span>Save Record</span>
-                </button>
+                </Button>
               </div>
             </form>
           )}
 
           {/* Highcharts Visualization Container */}
-          <div className="bg-slate-950/70 border border-slate-800 p-4 rounded-2xl min-h-[350px] flex flex-col justify-center">
+          <div className="bg-white border border-slate-200 p-4 rounded-xl min-h-[340px] flex flex-col justify-center shadow-xs">
             {loading ? (
-              <div className="flex flex-col items-center justify-center py-12 text-slate-400 space-y-2">
-                <Loader2 className="w-7 h-7 text-emerald-400 animate-spin" />
+              <div className="flex flex-col items-center justify-center py-12 text-slate-500 space-y-2">
+                <Loader2 className="w-7 h-7 text-forest-800 animate-spin" />
                 <p className="text-xs">Loading analytics data...</p>
               </div>
             ) : error ? (
-              <div className="py-8 text-center text-red-400 text-xs">{error}</div>
+              <div className="py-8 text-center text-red-600 text-xs">{error}</div>
             ) : analytics.length === 0 ? (
               <div className="py-12 text-center text-slate-500 space-y-3">
-                <BarChart2 className="w-10 h-10 mx-auto text-slate-600" />
-                <p className="text-xs font-medium text-slate-300">
-                  No analytics data logged for this site yet.
+                <BarChart2 className="w-9 h-9 mx-auto text-slate-400" />
+                <p className="text-xs font-semibold text-slate-700">
+                  No analytics logs recorded for this site yet.
                 </p>
-                <p className="text-[11px] text-slate-500 max-w-sm mx-auto">
-                  Click "Log Data Entry" or "Seed Demo Data" above to visualize carbon and
-                  biodiversity metrics on Highcharts.
+                <p className="text-[11px] text-slate-500 max-w-xs mx-auto leading-relaxed">
+                  Click "Log Data Entry" or "Seed Demo Data" above to chart carbon sequestration and
+                  biodiversity performance metrics.
                 </p>
               </div>
             ) : (
@@ -428,7 +432,7 @@ export const SiteAnalyticsModal: React.FC<SiteAnalyticsModalProps> = ({
             )}
           </div>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };

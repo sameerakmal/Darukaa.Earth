@@ -5,13 +5,34 @@ import { CreateProjectModal } from '../components/Projects/CreateProjectModal';
 import { projectsApi } from '../api/projects';
 import { sitesApi } from '../api/sites';
 import { Project, ProjectCreateInput } from '../types/project';
-import { Plus, Search, FolderPlus, Loader2, AlertCircle } from 'lucide-react';
+import {
+  Plus,
+  Search,
+  FolderPlus,
+  AlertCircle,
+  MapPin,
+  CheckCircle2,
+  ListFilter,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 export const DashboardPage: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const fetchProjects = async () => {
@@ -58,100 +79,181 @@ export const DashboardPage: React.FC = () => {
     }
   };
 
-  const filteredProjects = projects.filter(
-    (p) =>
+  // Summary statistics
+  const totalSitesCount = projects.reduce((acc, p) => acc + (p.site_count || 0), 0);
+  const activeProjectsCount = projects.filter((p) => p.status.toLowerCase() === 'active').length;
+
+  const filteredProjects = projects.filter((p) => {
+    const matchesSearch =
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.project_type.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (p.description && p.description.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+      (p.description && p.description.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    const matchesType = typeFilter === 'all' || p.project_type.toLowerCase() === typeFilter;
+    const matchesStatus = statusFilter === 'all' || p.status.toLowerCase() === statusFilter;
+
+    return matchesSearch && matchesType && matchesStatus;
+  });
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
-      <Navbar />
+    <div className="min-h-screen bg-[#F8FAF8] flex flex-col font-sans text-slate-900">
+      <Navbar onOpenCreateProject={() => setIsModalOpen(true)} activeTab="projects" />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-6 py-8">
-        {/* Header Section */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-2xl font-bold text-white tracking-tight">Projects Overview</h1>
-            <p className="text-xs text-slate-400 mt-1">
-              Manage geospatial carbon, reforestation, and biodiversity initiatives.
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        {/* Compact Green Hero Header */}
+        <div className="bg-emerald-950 border border-emerald-900 rounded-2xl p-6 sm:p-8 text-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
+          <div className="space-y-2 max-w-2xl relative z-10">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight font-sans text-white">
+              Monitor the places that matter.
+            </h1>
+            <p className="text-sm text-emerald-100/80 leading-relaxed font-sans">
+              Track ecological initiatives, map spatial boundaries, and analyze climate impact
+              metrics.
             </p>
+
+            {/* Integrated Stats Row */}
+            <div className="flex items-center space-x-6 pt-3 mt-1 border-t border-emerald-900/80">
+              <div className="flex items-center space-x-2">
+                <FolderPlus className="w-4 h-4 text-emerald-400" />
+                <span className="text-xs text-emerald-200">
+                  <strong className="text-white font-semibold">{projects.length}</strong> Projects
+                </span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <MapPin className="w-4 h-4 text-emerald-400" />
+                <span className="text-xs text-emerald-200">
+                  <strong className="text-white font-semibold">{totalSitesCount}</strong> Sites
+                  Mapped
+                </span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <span className="text-xs text-emerald-200">
+                  <strong className="text-white font-semibold">{activeProjectsCount}</strong> Active
+                </span>
+              </div>
+            </div>
           </div>
 
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="inline-flex items-center space-x-2 bg-emerald-400 hover:bg-emerald-300 text-slate-950 px-4 py-2.5 rounded-xl font-semibold text-xs transition-colors shadow-lg shadow-emerald-950/40 self-start md:self-auto"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Create New Project</span>
-          </button>
+          <div className="shrink-0 relative z-10">
+            <Button
+              onClick={() => setIsModalOpen(true)}
+              className="bg-emerald-500 hover:bg-emerald-600 text-white gap-2 font-semibold shadow-sm px-5 py-2.5 h-10 text-xs rounded-xl"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Create Project</span>
+            </Button>
+          </div>
         </div>
 
-        {/* Search & Stats Bar */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
-          <div className="relative w-full sm:w-80">
-            <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search projects by name or type..."
-              className="w-full bg-slate-900/80 border border-slate-800 text-slate-100 text-xs rounded-xl pl-9 pr-3 py-2.5 focus:outline-none focus:border-emerald-500 transition-colors"
-            />
-          </div>
+        {/* Filter Navigation & Search Bar */}
+        <div className="space-y-4 pt-2">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="relative w-full sm:w-80">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search projects by name or description..."
+                className="pl-9 bg-white border-slate-200 focus:border-emerald-600 text-xs rounded-lg"
+              />
+            </div>
 
-          <div className="text-xs text-slate-400 font-medium self-end sm:self-auto">
-            Showing <span className="text-white font-semibold">{filteredProjects.length}</span> of{' '}
-            <span className="text-white font-semibold">{projects.length}</span> projects
+            <div className="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-end">
+              <div className="flex items-center space-x-2">
+                <ListFilter className="w-3.5 h-3.5 text-slate-400" />
+                <Select value={typeFilter} onValueChange={(val) => setTypeFilter(val)}>
+                  <SelectTrigger className="w-36 h-9 bg-white border-slate-200 text-xs rounded-lg">
+                    <SelectValue placeholder="All Types" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Types</SelectItem>
+                    <SelectItem value="carbon">Carbon</SelectItem>
+                    <SelectItem value="biodiversity">Biodiversity</SelectItem>
+                    <SelectItem value="reforestation">Reforestation</SelectItem>
+                    <SelectItem value="conservation">Conservation</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select value={statusFilter} onValueChange={(val) => setStatusFilter(val)}>
+                  <SelectTrigger className="w-36 h-9 bg-white border-slate-200 text-xs rounded-lg">
+                    <SelectValue placeholder="All Statuses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="planning">Planning</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Content Section */}
         {loading ? (
-          <div className="py-20 flex flex-col items-center justify-center text-slate-400 space-y-3">
-            <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
-            <p className="text-xs font-medium">Loading projects...</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="bg-white border border-slate-200 rounded-xl p-5 space-y-4">
+                <div className="flex justify-between items-center">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-4 w-16" />
+                </div>
+                <div className="space-y-2">
+                  <Skeleton className="h-5 w-3/4" />
+                  <Skeleton className="h-3 w-full" />
+                </div>
+                <div className="flex justify-between items-center pt-2">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-4 w-16" />
+                </div>
+              </div>
+            ))}
           </div>
         ) : error ? (
-          <div className="bg-red-500/10 border border-red-500/30 p-6 rounded-2xl text-center max-w-md mx-auto my-12">
-            <AlertCircle className="w-8 h-8 text-red-400 mx-auto mb-2" />
-            <p className="text-sm font-semibold text-red-300 mb-1">Failed to load projects</p>
-            <p className="text-xs text-red-400/80 mb-4">{error}</p>
-            <button
-              onClick={fetchProjects}
-              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg transition-colors"
-            >
+          <div className="bg-red-50 border border-red-200 p-6 rounded-xl text-center max-w-md mx-auto my-12">
+            <AlertCircle className="w-8 h-8 text-red-600 mx-auto mb-2" />
+            <p className="text-sm font-semibold text-red-900 mb-1">Failed to load projects</p>
+            <p className="text-xs text-red-700/80 mb-4">{error}</p>
+            <Button onClick={fetchProjects} variant="outline" size="sm">
               Retry
-            </button>
+            </Button>
           </div>
         ) : filteredProjects.length === 0 ? (
-          <div className="border border-dashed border-slate-800 rounded-2xl p-12 text-center max-w-md mx-auto my-12 bg-slate-900/20">
-            <div className="w-12 h-12 rounded-xl bg-slate-800/80 text-slate-400 flex items-center justify-center mx-auto mb-4 border border-slate-700/50">
-              <FolderPlus className="w-6 h-6 text-emerald-400" />
-            </div>
-            <h3 className="text-base font-bold text-white mb-1">
-              {searchQuery ? 'No matching projects' : 'No projects created yet'}
-            </h3>
-            <p className="text-xs text-slate-400 mb-6 leading-relaxed">
-              {searchQuery
-                ? `No projects match "${searchQuery}". Try clearing your search filter.`
-                : 'Create your first geospatial project to add sites and draw polygon boundaries.'}
-            </p>
-            {!searchQuery && (
-              <button
-                onClick={() => setIsModalOpen(true)}
-                className="inline-flex items-center space-x-2 bg-emerald-400 hover:bg-emerald-300 text-slate-950 px-4 py-2 rounded-lg font-semibold text-xs transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Create First Project</span>
-              </button>
-            )}
-          </div>
+          <EmptyState
+            icon={<FolderPlus className="w-5 h-5 text-emerald-700" />}
+            title={
+              searchQuery || typeFilter !== 'all' || statusFilter !== 'all'
+                ? 'No matching projects found'
+                : 'No projects created yet'
+            }
+            description={
+              searchQuery || typeFilter !== 'all' || statusFilter !== 'all'
+                ? 'No projects match your active search or filters. Try adjusting your search criteria.'
+                : 'Create your first environmental initiative to begin mapping site boundaries.'
+            }
+            actionLabel={
+              searchQuery || typeFilter !== 'all' || statusFilter !== 'all'
+                ? undefined
+                : 'Create First Project'
+            }
+            onAction={
+              searchQuery || typeFilter !== 'all' || statusFilter !== 'all'
+                ? undefined
+                : () => setIsModalOpen(true)
+            }
+          />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProjects.map((project) => (
-              <ProjectCard key={project.id} project={project} onDelete={handleDeleteProject} />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {filteredProjects.map((project, idx) => (
+              <ProjectCard
+                key={project.id}
+                project={project}
+                index={idx}
+                onDelete={handleDeleteProject}
+              />
             ))}
           </div>
         )}

@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import MapboxDraw from '@mapbox/mapbox-gl-draw';
 import { Site, GeoJSONPolygon } from '../../types/site';
-import { AlertTriangle, Layers } from 'lucide-react';
+import { AlertTriangle, Layers, Pencil } from 'lucide-react';
 
 import 'mapbox-gl/dist/mapbox-gl.css';
 import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css';
@@ -26,6 +26,7 @@ export const ProjectMap: React.FC<ProjectMapProps> = ({
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const drawRef = useRef<MapboxDraw | null>(null);
+  const popupRef = useRef<mapboxgl.Popup | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
 
   const sitesRef = useRef(sites);
@@ -85,6 +86,13 @@ export const ProjectMap: React.FC<ProjectMapProps> = ({
     map.addControl(draw as unknown as mapboxgl.IControl, 'top-left');
     drawRef.current = draw;
 
+    const popup = new mapboxgl.Popup({
+      closeButton: false,
+      closeOnClick: false,
+      offset: 10,
+    });
+    popupRef.current = popup;
+
     map.on('load', () => {
       setMapLoaded(true);
 
@@ -96,24 +104,49 @@ export const ProjectMap: React.FC<ProjectMapProps> = ({
         },
       });
 
+      // Polygon fill styling
       map.addLayer({
         id: 'sites-fill',
         type: 'fill',
         source: 'sites-geojson',
         paint: {
-          'fill-color': ['case', ['boolean', ['get', 'isSelected'], false], '#f59e0b', '#10b981'],
-          'fill-opacity': 0.4,
+          'fill-color': ['case', ['boolean', ['get', 'isSelected'], false], '#F59E0B', '#10B981'],
+          'fill-opacity': ['case', ['boolean', ['get', 'isSelected'], false], 0.55, 0.35],
         },
       });
 
+      // Polygon outline styling
       map.addLayer({
         id: 'sites-line',
         type: 'line',
         source: 'sites-geojson',
         paint: {
-          'line-color': ['case', ['boolean', ['get', 'isSelected'], false], '#fbbf24', '#34d399'],
-          'line-width': 2.5,
+          'line-color': ['case', ['boolean', ['get', 'isSelected'], false], '#D97706', '#047857'],
+          'line-width': ['case', ['boolean', ['get', 'isSelected'], false], 3.5, 2.0],
         },
+      });
+
+      // Map hover popovers
+      map.on('mousemove', 'sites-fill', (e) => {
+        if (!e.features || e.features.length === 0) return;
+        const feature = e.features[0];
+        const props = feature.properties;
+        map.getCanvas().style.cursor = 'pointer';
+
+        if (props && props.name) {
+          const lng = e.lngLat.lng.toFixed(4);
+          const lat = e.lngLat.lat.toFixed(4);
+          popup
+            .setLngLat(e.lngLat)
+            .setHTML(
+              `<div style="font-family: 'Inter', sans-serif; font-size: 11px; background: #ffffff; color: #0f172a; padding: 6px 10px; border-radius: 6px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgb(15 23 42 / 0.1);">
+                <div style="font-weight: 700; color: #0f172a; font-size: 12px; margin-bottom: 2px;">${props.name}</div>
+                ${props.area ? `<div style="font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #059669; font-weight: 600;">AREA: ${props.area} ha</div>` : ''}
+                <div style="font-family: 'JetBrains Mono', monospace; font-size: 9px; color: #64748b; margin-top: 2px;">${lat}°N ${lng}°E</div>
+              </div>`
+            )
+            .addTo(map);
+        }
       });
 
       map.on('click', 'sites-fill', (e) => {
@@ -127,12 +160,9 @@ export const ProjectMap: React.FC<ProjectMapProps> = ({
         }
       });
 
-      map.on('mouseenter', 'sites-fill', () => {
-        map.getCanvas().style.cursor = 'pointer';
-      });
-
       map.on('mouseleave', 'sites-fill', () => {
         map.getCanvas().style.cursor = '';
+        popup.remove();
       });
     });
 
@@ -147,7 +177,7 @@ export const ProjectMap: React.FC<ProjectMapProps> = ({
     };
   }, [isTokenConfigured, rawToken, handleDrawCreate]);
 
-  // Update map features & bounds when sites change
+  // Update map features & camera positioning when sites or selectedSiteId change
   useEffect(() => {
     if (!mapRef.current || !mapLoaded) return;
 
@@ -156,6 +186,7 @@ export const ProjectMap: React.FC<ProjectMapProps> = ({
       properties: {
         id: site.id,
         name: site.name,
+        area: site.area,
         isSelected: site.id === selectedSiteId,
       },
       geometry: site.geometry,
@@ -169,7 +200,25 @@ export const ProjectMap: React.FC<ProjectMapProps> = ({
       });
     }
 
-    if (sites.length > 0) {
+    if (selectedSiteId) {
+      // Camera flies directly to the selected site polygon
+      const selectedSite = sites.find((s) => s.id === selectedSiteId);
+      if (selectedSite && selectedSite.geometry && selectedSite.geometry.coordinates) {
+        const bounds = new mapboxgl.LngLatBounds();
+        selectedSite.geometry.coordinates[0].forEach((coord) => {
+          bounds.extend([coord[0], coord[1]]);
+        });
+
+        if (!bounds.isEmpty()) {
+          mapRef.current.fitBounds(bounds, {
+            padding: 100,
+            maxZoom: 14,
+            duration: 1200,
+          });
+        }
+      }
+    } else if (sites.length > 0) {
+      // Fit to all sites when no specific site is selected
       const bounds = new mapboxgl.LngLatBounds();
       sites.forEach((site) => {
         if (site.geometry && site.geometry.coordinates) {
@@ -180,7 +229,11 @@ export const ProjectMap: React.FC<ProjectMapProps> = ({
       });
 
       if (!bounds.isEmpty()) {
-        mapRef.current.fitBounds(bounds, { padding: 80, maxZoom: 15, duration: 1000 });
+        mapRef.current.fitBounds(bounds, {
+          padding: 80,
+          maxZoom: 12,
+          duration: 1000,
+        });
       }
     }
   }, [sites, selectedSiteId, mapLoaded]);
@@ -199,20 +252,20 @@ export const ProjectMap: React.FC<ProjectMapProps> = ({
 
   if (!isTokenConfigured) {
     return (
-      <div className="h-full w-full bg-slate-900 border border-slate-800 rounded-2xl p-8 flex flex-col items-center justify-center text-center">
-        <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 mb-4">
+      <div className="h-full w-full bg-white border border-slate-200 rounded-xl p-8 flex flex-col items-center justify-center text-center shadow-xs">
+        <div className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700 mb-4 shadow-xs">
           <AlertTriangle className="w-6 h-6" />
         </div>
-        <h3 className="text-lg font-bold text-white mb-2">Mapbox Access Token Required</h3>
-        <p className="text-xs text-slate-400 max-w-md mb-6 leading-relaxed">
+        <h3 className="text-base font-bold text-slate-900 mb-2">Mapbox Access Token Required</h3>
+        <p className="text-xs text-slate-500 max-w-md mb-6 leading-relaxed">
           To render interactive satellite maps and draw site polygons, please create a local{' '}
-          <code className="text-amber-300 bg-slate-800 px-1.5 py-0.5 rounded font-mono">
+          <code className="text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded font-mono border border-amber-200">
             frontend/.env
           </code>{' '}
-          file and configure your Mapbox public token.
+          file and configure your Mapbox public access token.
         </p>
-        <div className="bg-slate-950 p-4 rounded-xl text-xs font-mono text-slate-300 border border-slate-800 text-left w-full max-w-md space-y-1">
-          <div className="text-slate-500 font-sans text-[11px] mb-1">frontend/.env</div>
+        <div className="bg-slate-900 p-4 rounded-xl text-xs font-mono text-slate-100 text-left w-full max-w-md space-y-1">
+          <div className="text-slate-400 font-sans text-[11px] mb-1">frontend/.env</div>
           <div>VITE_API_BASE_URL=http://localhost:8000</div>
           <div className="text-emerald-400 font-semibold">VITE_MAPBOX_TOKEN=pk.eyJ1Ijo...</div>
         </div>
@@ -221,15 +274,23 @@ export const ProjectMap: React.FC<ProjectMapProps> = ({
   }
 
   return (
-    <div className="relative w-full h-full rounded-2xl overflow-hidden border border-slate-800">
-      <div ref={mapContainerRef} className="w-full h-full min-h-[450px]" />
+    <div className="relative w-full h-full rounded-xl overflow-hidden border border-slate-200 shadow-sm bg-slate-900">
+      <div ref={mapContainerRef} className="w-full h-full min-h-[480px]" />
 
       {isDrawingMode && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-slate-900/90 backdrop-blur border border-emerald-500/50 px-4 py-2 rounded-xl text-xs font-medium text-emerald-400 flex items-center space-x-2 shadow-xl z-10 animate-pulse">
-          <Layers className="w-4 h-4 text-emerald-400" />
-          <span>Polygon Drawing Mode Active: Click map to draw polygon boundary</span>
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-amber-600 text-white px-4 py-2 rounded-lg text-xs font-semibold flex items-center space-x-2 shadow-lg z-10 animate-bounce border border-amber-700">
+          <Pencil className="w-4 h-4" />
+          <span>
+            DRAWING ACTIVE: Click map points to construct boundary. Double-click to complete loop.
+          </span>
         </div>
       )}
+
+      {/* Map style indicator */}
+      <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-md border border-slate-200 px-3 py-1.5 rounded-lg text-[11px] font-mono text-slate-700 font-semibold flex items-center gap-2 shadow-xs pointer-events-none">
+        <Layers className="w-3.5 h-3.5 text-emerald-600" />
+        <span>MAPBOX SATELLITE</span>
+      </div>
     </div>
   );
 };
